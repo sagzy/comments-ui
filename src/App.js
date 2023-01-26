@@ -3,6 +3,7 @@ import React from 'react';
 import {isSyncAction, ActionHandler, SyncActionHandler} from './actions';
 import {createPopupNotification} from './utils/helpers';
 import AppContext from './AppContext';
+import {WebSocketProvider} from './context/WebSocketContext';
 import {hasMode} from './utils/check-mode';
 import setupGhostApi from './utils/api';
 import ContentBox from './components/ContentBox';
@@ -312,11 +313,13 @@ export default class App extends React.Component {
         return (
             <SentryErrorBoundary dsn={this.props.sentryDsn}>
                 <AppContext.Provider value={this.getContextFromState()}>
-                    <CommentsFrame>
-                        <ContentBox done={done} />
-                    </CommentsFrame>
-                    <AuthFrame adminUrl={this.props.adminUrl} onLoad={this.initAdminAuth}/>
-                    <PopupBox />
+                    <WebSocketProvider>
+                        <CommentsFrame>
+                            <ContentBox done={done} />
+                        </CommentsFrame>
+                        <AuthFrame adminUrl={this.props.adminUrl} onLoad={this.initAdminAuth}/>
+                        <PopupBox />
+                    </WebSocketProvider>
                 </AppContext.Provider>
             </SentryErrorBoundary>
         );

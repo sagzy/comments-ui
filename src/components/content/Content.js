@@ -1,5 +1,6 @@
-import React, {useContext, useEffect} from 'react';
+import React, {useContext, useEffect, useState} from 'react';
 import AppContext from '../../AppContext';
+import {WebSocketContext} from '../../context/WebSocketContext';
 import CTABox from './CTABox';
 import MainForm from './forms/MainForm';
 import Comment from './Comment';
@@ -8,8 +9,30 @@ import ContentTitle from './ContentTitle';
 import {ROOT_DIV_ID} from '../../utils/constants';
 
 const Content = () => {
-    const {pagination, member, comments, commentCount, commentsEnabled, title, showCount, secundaryFormCount} = useContext(AppContext);
+    const {pagination, member, comments, commentsEnabled, title, showCount, secundaryFormCount, postId} = useContext(AppContext);
+    const {ready, data, send} = useContext(WebSocketContext);
+
+    const [commentCount, setCommentCount] = useState(0);
     const commentsElements = comments.slice().reverse().map(comment => <Comment comment={comment} key={comment.id} />);
+
+    // Trigger a broadcast when:
+    // - the websocket connection opens (`ready`)
+    // - the comments array changes (`comments`)
+    useEffect(() => {
+        if (ready) {
+            const message = {resource: 'comments', action: 'count', params: {ids: postId}};
+            send(JSON.stringify(message));
+        }
+    }, [ready, postId, comments]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    // Update the comment count when the postId matches
+    useEffect(() => {
+        if (data) {
+            if (postId === data.comments?.ids) {
+                setCommentCount(data.comments?.count);
+            }
+        }
+    }, [data, postId]);
 
     const paidOnly = commentsEnabled === 'paid';
     const isPaidMember = member && !!member.paid;
